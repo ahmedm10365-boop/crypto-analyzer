@@ -33,7 +33,7 @@ import { formatPrice, formatPercentage } from "@/lib/format";
 import SignalBadge from "@/components/SignalBadge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiRequest } from "@/lib/queryClient";
+import { fetchCoins, fetchOHLC } from "@/lib/api";
 
 export default function Analysis() {
   const [selectedCoin, setSelectedCoin] = useState<string>("bitcoin");
@@ -41,16 +41,14 @@ export default function Analysis() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: coins } = useQuery<CoinMarketData[]>({
-    queryKey: ["/api/coins"],
+    queryKey: ["coins"],
+    queryFn: () => fetchCoins(),
     staleTime: 30000,
   });
 
   const { data: ohlcData, isLoading: ohlcLoading } = useQuery<OHLCData[]>({
-    queryKey: ["/api/coins", selectedCoin, "ohlc", days],
-    queryFn: async () => {
-      const res = await apiRequest("GET", `/api/coins/${selectedCoin}/ohlc?days=${days}`);
-      return res.json();
-    },
+    queryKey: ["ohlc", selectedCoin, days],
+    queryFn: () => fetchOHLC(selectedCoin, Number(days)),
     staleTime: 120000,
   });
 

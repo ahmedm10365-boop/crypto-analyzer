@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { useMemo } from "react";
 import {
@@ -21,7 +21,8 @@ import SignalBadge from "@/components/SignalBadge";
 import SparklineChart from "@/components/SparklineChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { fetchCoinDetail, fetchOHLC } from "@/lib/api";
+import { useWatchlist } from "@/lib/watchlistStore";
 import { useToast } from "@/hooks/use-toast";
 import {
   LineChart,
@@ -43,45 +44,30 @@ export default function CoinDetail() {
   const { toast } = useToast();
 
   const { data: coin, isLoading } = useQuery<CoinDetailType>({
-    queryKey: ["/api/coins", coinId, "detail"],
+    queryKey: ["coin-detail", coinId],
+    queryFn: () => fetchCoinDetail(coinId),
     enabled: !!coinId,
   });
 
   const { data: ohlcData } = useQuery<OHLCData[]>({
-    queryKey: ["/api/coins", coinId, "ohlc", "30"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", `/api/coins/${coinId}/ohlc?days=30`);
-      return res.json();
-    },
+    queryKey: ["ohlc", coinId, "30"],
+    queryFn: () => fetchOHLC(coinId, 30),
     enabled: !!coinId,
     staleTime: 120000,
   });
 
-  const { data: watchlist } = useQuery<Watchlist[]>({
-    queryKey: ["/api/watchlist"],
-  });
+  const { watchlistIds, add, remove, has } = useWatchlist();
+  const isInWatchlist = has(coinId);
 
-  const isInWatchlist = watchlist?.some((w) => w.coinId === coinId);
-
-  const toggleWatchlist = useMutation({
-    mutationFn: async () => {
-      if (isInWatchlist) {
-        await apiRequest("DELETE", `/api/watchlist/${coinId}`);
-      } else {
-        await apiRequest("POST", "/api/watchlist", {
-          coinId: coinId,
-          symbol: coin?.symbol || "",
-          name: coin?.name || "",
-        });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/watchlist"] });
-      toast({
-        title: isInWatchlist ? "تم الحذف من المفضلة" : "تمت الإضافة للمفضلة",
-      });
-    },
-  });
+  const handleToggleWatchlist = () => {
+    if (isInWatchlist) {
+      remove(coinId);
+      toast({ title: "تم الحذف من المفضلة" });
+    } else {
+      add(coinId);
+      toast({ title: "تمت الإضافة للمفضلة" });
+    }
+  };
 
   const analysis = useMemo(() => {
     if (!ohlcData || ohlcData.length < 30 || !coin) return null;
@@ -182,7 +168,7 @@ export default function CoinDetail() {
               data-testid="button-toggle-watchlist"
               variant={isInWatchlist ? "default" : "outline"}
               size="sm"
-              onClick={() => toggleWatchlist.mutate()}
+              onClick={handleToggleWatchlist}
               className="gap-1.5"
             >
               <Star className={`w-3.5 h-3.5 ${isInWatchlist ? "fill-current" : ""}`} />

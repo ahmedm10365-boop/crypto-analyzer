@@ -16,15 +16,12 @@ import { generateRecommendation } from "@/lib/technicalAnalysis";
 import { formatPrice, formatPercentage } from "@/lib/format";
 import SignalBadge from "@/components/SignalBadge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiRequest } from "@/lib/queryClient";
+import { fetchCoins, fetchOHLC } from "@/lib/api";
 
 function CoinRecommendation({ coin }: { coin: CoinMarketData }) {
   const { data: ohlcData, isLoading } = useQuery<OHLCData[]>({
-    queryKey: ["/api/coins", coin.id, "ohlc"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", `/api/coins/${coin.id}/ohlc?days=30`);
-      return res.json();
-    },
+    queryKey: ["ohlc", coin.id],
+    queryFn: () => fetchOHLC(coin.id, 30),
     staleTime: 300000,
   });
 
@@ -170,7 +167,8 @@ export default function Recommendations() {
   const [filter, setFilter] = useState<"all" | "buy" | "sell">("all");
 
   const { data: coins, isLoading } = useQuery<CoinMarketData[]>({
-    queryKey: ["/api/coins"],
+    queryKey: ["coins"],
+    queryFn: () => fetchCoins(),
     staleTime: 30000,
   });
 

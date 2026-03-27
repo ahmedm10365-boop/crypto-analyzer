@@ -16,22 +16,25 @@ import KPICard from "@/components/KPICard";
 import SparklineChart from "@/components/SparklineChart";
 import { formatPrice, formatMarketCap, formatPercentage } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiRequest } from "@/lib/queryClient";
+import { fetchCoins, fetchGlobal, fetchTrending } from "@/lib/api";
 
 export default function Dashboard() {
   const { data: coins, isLoading: coinsLoading, refetch: refetchCoins } = useQuery<CoinMarketData[]>({
-    queryKey: ["/api/coins"],
+    queryKey: ["coins"],
+    queryFn: () => fetchCoins(),
     refetchInterval: 60000,
     staleTime: 30000,
   });
 
   const { data: globalData, isLoading: globalLoading } = useQuery<any>({
-    queryKey: ["/api/global"],
+    queryKey: ["global"],
+    queryFn: fetchGlobal,
     staleTime: 60000,
   });
 
   const { data: trending } = useQuery<any>({
-    queryKey: ["/api/trending"],
+    queryKey: ["trending"],
+    queryFn: fetchTrending,
     staleTime: 120000,
   });
 

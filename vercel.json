@@ -1,8 +1,4 @@
 {
-  "buildCommand": "npx vite build --outDir public",
-  "outputDirectory": "public",
-  "framework": null,
-  "rewrites": [
-    { "source": "/api/coins", "destination": "/api/coins" }
-  ]
+  "buildCommand": "npm run build:static",
+  "outputDirectory": "dist/public"
 }

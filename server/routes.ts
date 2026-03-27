@@ -18,53 +18,26 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  // Get top coins market data
+  // Unified coins endpoint (supports query params for Vercel compatibility)
   app.get("/api/coins", async (req, res) => {
     try {
-      const page = req.query.page || "1";
-      const perPage = req.query.per_page || "50";
-      const data = await fetchCG(
-        `/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=true&price_change_percentage=1h,24h,7d`
-      );
-      res.json(data);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
+      const { id, action, days, page, per_page: perPage } = req.query;
 
-  // Get single coin details
-  app.get("/api/coins/:id", async (req, res) => {
-    try {
-      const data = await fetchCG(
-        `/coins/${req.params.id}?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=true`
-      );
-      res.json(data);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // Get OHLC data for candlestick charts
-  app.get("/api/coins/:id/ohlc", async (req, res) => {
-    try {
-      const days = req.query.days || "30";
-      const data = await fetchCG(
-        `/coins/${req.params.id}/ohlc?vs_currency=usd&days=${days}`
-      );
-      res.json(data);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // Get market chart data (price, volume, market cap)
-  app.get("/api/coins/:id/market_chart", async (req, res) => {
-    try {
-      const days = req.query.days || "30";
-      const data = await fetchCG(
-        `/coins/${req.params.id}/market_chart?vs_currency=usd&days=${days}`
-      );
-      res.json(data);
+      if (id && action === "ohlc") {
+        const data = await fetchCG(`/coins/${id}/ohlc?vs_currency=usd&days=${days || "30"}`);
+        return res.json(data);
+      } else if (id && action === "market_chart") {
+        const data = await fetchCG(`/coins/${id}/market_chart?vs_currency=usd&days=${days || "30"}`);
+        return res.json(data);
+      } else if (id) {
+        const data = await fetchCG(`/coins/${id}?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=true`);
+        return res.json(data);
+      } else {
+        const data = await fetchCG(
+          `/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage || "50"}&page=${page || "1"}&sparkline=true&price_change_percentage=1h,24h,7d`
+        );
+        return res.json(data);
+      }
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

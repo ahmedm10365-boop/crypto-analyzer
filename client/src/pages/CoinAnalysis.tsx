@@ -139,7 +139,7 @@ export default function CoinAnalysis() {
   const { data: coinData, isLoading: coinLoading } = useQuery<any>({
     queryKey: ["/api/coins", coinId],
     queryFn: async () => {
-      const res = await fetch(`/api/coins/${coinId}`);
+      const res = await fetch(`/api/coins?id=${coinId}`);
       if (!res.ok) throw new Error("Failed to fetch coin data");
       return res.json();
     },
@@ -148,7 +148,7 @@ export default function CoinAnalysis() {
   const { data: ohlcData } = useQuery<number[][]>({
     queryKey: ["/api/coins", coinId, "ohlc", selectedDays],
     queryFn: async () => {
-      const res = await fetch(`/api/coins/${coinId}/ohlc?days=${selectedDays}`);
+      const res = await fetch(`/api/coins?id=${coinId}&action=ohlc&days=${selectedDays}`);
       if (!res.ok) throw new Error("Failed to fetch OHLC data");
       return res.json();
     },
@@ -157,7 +157,7 @@ export default function CoinAnalysis() {
   const { data: chartData } = useQuery<any>({
     queryKey: ["/api/coins", coinId, "market_chart", selectedDays],
     queryFn: async () => {
-      const res = await fetch(`/api/coins/${coinId}/market_chart?days=${selectedDays}`);
+      const res = await fetch(`/api/coins?id=${coinId}&action=market_chart&days=${selectedDays}`);
       if (!res.ok) throw new Error("Failed to fetch chart data");
       return res.json();
     },
